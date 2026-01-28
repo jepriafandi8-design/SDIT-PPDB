@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPDB Online - SDIT IBNU HAJAR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .arabic-font {
+      font-family: 'Amiri', serif;
+    }
+    
+    .gradient-islamic {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5f3f 100%);
+    }
+    
+    .card-hover {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+    }
+    
+    .nav-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .section-spacing {
+      padding: 4rem 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .section-spacing {
+        padding: 2rem 1rem;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full">
+  <div id="app" class="w-full h-full overflow-auto"></div>
+  <script>
+    const defaultConfig = {
+      school_name: "SDIT IBNU HAJAR",
+      tagline: "Membentuk Generasi Qur'ani, Berkarakter, dan Berprestasi",
+      hero_title: "Penerimaan Siswa Baru Tahun Pelajaran 2026/2027 Telah Dibuka!",
+      school_address: "Jl. Pendidikan No. 123, Jakarta Selatan",
+      whatsapp_number: "081234567890",
+      primary_color: "#1e3a5f",
+      secondary_color: "#2d5f3f",
+      accent_color: "#d4af37",
+      surface_color: "#ffffff",
+      text_color: "#1f2937",
+      font_family: "Inter",
+      font_size: 16
+    };
+
+    let currentPage = 'beranda';
+    let pendaftaranData = [];
+    let isSubmitting = false;
+    let isAdminLoggedIn = false;
+
+    const dataHandler = {
+      onDataChanged(data) {
+        pendaftaranData = data;
+        if (currentPage === 'pengumuman') {
+          renderPengumumanContent();
+        }
+      }
+    };
+
+    async function init() {
+      if (window.dataSdk) {
+        const result = await window.dataSdk.init(dataHandler);
+        if (!result.isOk) {
+          console.error("Failed to initialize data SDK");
+        }
+      }
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (config) => {
+            applyConfigToUI(config);
+          },
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.primary_color || defaultConfig.primary_color,
+                set: (value) => {
+                  config.primary_color = value;
+                  window.elementSdk.setConfig({ primary_color: value });
+                }
+              },
+              {
+                get: () => config.secondary_color || defaultConfig.secondary_color,
+                set: (value) => {
+                  config.secondary_color = value;
+                  window.elementSdk.setConfig({ secondary_color: value });
+                }
+              },
+              {
+                get: () => config.accent_color || defaultConfig.accent_color,
+                set: (value) => {
+                  config.accent_color = value;
+                  window.elementSdk.setConfig({ accent_color: value });
+                }
+              },
+              {
+                get: () => config.surface_color || defaultConfig.surface_color,
+                set: (value) => {
+                  config.surface_color = value;
+                  window.elementSdk.setConfig({ surface_color: value });
+                }
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (value) => {
+                  config.text_color = value;
+                  window.elementSdk.setConfig({ text_color: value });
+                }
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (value) => {
+                config.font_family = value;
+                window.elementSdk.setConfig({ font_family: value });
+              }
+            },
+            fontSizeable: {
+              get: () => config.font_size || defaultConfig.font_size,
+              set: (value) => {
+                config.font_size = value;
+                window.elementSdk.setConfig({ font_size: value });
+              }
+            }
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["school_name", config.school_name || defaultConfig.school_name],
+            ["tagline", config.tagline || defaultConfig.tagline],
+            ["hero_title", config.hero_title || defaultConfig.hero_title],
+            ["school_address", config.school_address || defaultConfig.school_address],
+            ["whatsapp_number", config.whatsapp_number || defaultConfig.whatsapp_number]
+          ])
+        });
+      }
+      
+      renderPage();
+    }
+
+    function applyConfigToUI(config) {
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'system-ui, sans-serif';
+      const baseSize = config.font_size || defaultConfig.font_size;
+      
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.documentElement.style.fontSize = `${baseSize}px`;
+      
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      const secondaryColor = config.secondary_color || defaultConfig.secondary_color;
+      const accentColor = config.accent_color || defaultConfig.accent_color;
+      const surfaceColor = config.surface_color || defaultConfig.surface_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+      
+      document.documentElement.style.setProperty('--primary-color', primaryColor);
+      document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+      document.documentElement.style.setProperty('--accent-color', accentColor);
+      document.documentElement.style.setProperty('--surface-color', surfaceColor);
+      document.documentElement.style.setProperty('--text-color', textColor);
+      
+      const schoolNameEl = document.getElementById('school-name');
+      const taglineEl = document.getElementById('tagline');
+      const heroTitleEl = document.getElementById('hero-title');
+      const addressEl = document.getElementById('address');
+      const waNumberEl = document.getElementById('wa-number');
+      
+      if (schoolNameEl) schoolNameEl.textContent = config.school_name || defaultConfig.school_name;
+      if (taglineEl) taglineEl.textContent = config.tagline || defaultConfig.tagline;
+      if (heroTitleEl) heroTitleEl.textContent = config.hero_title || defaultConfig.hero_title;
+      if (addressEl) addressEl.textContent = config.school_address || defaultConfig.school_address;
+      if (waNumberEl) {
+        const number = config.whatsapp_number || defaultConfig.whatsapp_number;
+        waNumberEl.href = `https://wa.me/62${number.replace(/^0/, '')}`;
+      }
+      
+      const gradient = document.querySelector('.gradient-islamic');
+      if (gradient) {
+        gradient.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      }
+      
+      const buttons = document.querySelectorAll('.btn-primary');
+      buttons.forEach(btn => {
+        btn.style.backgroundColor = primaryColor;
+      });
+      
+      const accentElements = document.querySelectorAll('.text-accent');
+      accentElements.forEach(el => {
+        el.style.color = accentColor;
+      });
+      
+      const cards = document.querySelectorAll('.card');
+      cards.forEach(card => {
+        card.style.backgroundColor = surfaceColor;
+        card.style.color = textColor;
+      });
+    }
+
+    function renderPage() {
+      const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+      const app = document.getElementById('app');
+      
+      app.innerHTML = `
+        <nav class="nav-sticky shadow-md">
+          <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-white" style="background: ${config.primary_color || defaultConfig.primary_color}">
+                  <span class="text-xl font-bold">🕌</span>
+                </div>
+                <div>
+                  <h1 id="school-name" class="font-bold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px; color: ${config.text_color || defaultConfig.text_color}">${config.school_name || defaultConfig.school_name}</h1>
+                  <p class="text-xs" style="color: ${config.text_color || defaultConfig.text_color}; opacity: 0.7">PPDB Online 2026/2027</p>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-3">
+                <button onclick="navigateTo('beranda')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Beranda</button>
+                <button onclick="navigateTo('profil')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Profil</button>
+                <button onclick="navigateTo('alur')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Alur & Syarat</button>
+                <button onclick="navigateTo('biaya')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Biaya</button>
+                <button onclick="navigateTo('fasilitas')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Fasilitas</button>
+                <button onclick="navigateTo('program')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Program</button>
+                <button onclick="navigateTo('pendaftaran')" class="px-5 py-2 rounded-lg text-white btn-primary font-semibold hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; background: ${config.primary_color || defaultConfig.primary_color}">📝 Daftar</button>
+                <button onclick="navigateTo('pengumuman')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">Pengumuman</button>
+                <button onclick="navigateTo('admin')" class="px-4 py-2 rounded-lg hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; color: ${config.text_color || defaultConfig.text_color}">🔐 Admin</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+        
+        <div id="content"></div>
+        
+        <footer class="gradient-islamic text-white section-spacing" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color} 0%, ${config.secondary_color || defaultConfig.secondary_color} 100%)">
+          <div class="max-w-7xl mx-auto grid md:grid-cols-3 gap-8">
+            <div>
+              <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">${config.school_name || defaultConfig.school_name}</h3>
+              <p id="tagline" class="mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${config.tagline || defaultConfig.tagline}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Kontak</h4>
+              <p id="address" class="mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">📍 ${config.school_address || defaultConfig.school_address}</p>
+              <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">📞 ${config.whatsapp_number || defaultConfig.whatsapp_number}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Hubungi Kami</h4>
+              <a id="wa-number" href="https://wa.me/62${(config.whatsapp_number || defaultConfig.whatsapp_number).replace(/^0/, '')}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; background: ${config.accent_color || defaultConfig.accent_color}; color: ${config.text_color || defaultConfig.text_color}">
+                💬 WhatsApp Admin
+              </a>
+            </div>
+          </div>
+          <div class="max-w-7xl mx-auto mt-8 pt-6 border-t border-white border-opacity-20 text-center" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px">
+            <p>&copy; 2026 ${config.school_name || defaultConfig.school_name}. All rights reserved.</p>
+          </div>
+        </footer>
+      `;
+      
+      renderContent();
+    }
+
+    function navigateTo(page) {
+      currentPage = page;
+      renderContent();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderContent() {
+      const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+      const content = document.getElementById('content');
+      
+      switch(currentPage) {
+        case 'beranda':
+          renderBeranda(content, config);
+          break;
+        case 'profil':
+          renderProfil(content, config);
+          break;
+        case 'alur':
+          renderAlur(content, config);
+          break;
+        case 'biaya':
+          renderBiaya(content, config);
+          break;
+        case 'fasilitas':
+          renderFasilitas(content, config);
+          break;
+        case 'program':
+          renderProgram(content, config);
+          break;
+        case 'pendaftaran':
+          renderPendaftaran(content, config);
+          break;
+        case 'pengumuman':
+          renderPengumuman(content, config);
+          break;
+        case 'admin':
+          renderAdmin(content, config);
+          break;
+      }
+    }
+
+    function renderBeranda(content, config) {
+      content.innerHTML = `
+        <section class="gradient-islamic text-white section-spacing" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color} 0%, ${config.secondary_color || defaultConfig.secondary_color} 100%)">
+          <div class="max-w-7xl mx-auto text-center">
+            <div class="mb-6 text-6xl">🕌</div>
+            <h1 id="hero-title" class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px">${config.hero_title || defaultConfig.hero_title}</h1>
+            <p class="mb-8 max-w-2xl mx-auto" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">${config.tagline || defaultConfig.tagline}</p>
+            <button onclick="navigateTo('pendaftaran')" class="px-8 py-4 rounded-lg font-bold text-white hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px; background: ${config.accent_color || defaultConfig.accent_color}; color: ${config.text_color || defaultConfig.text_color}">
+              Daftar Sekarang ✨
+            </button>
+          </div>
+        </section>
+        
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-7xl mx-auto">
+            <h2 class="text-center font-bold mb-12" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2}px; color: ${config.text_color || defaultConfig.text_color}">Kenapa Memilih Kami?</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">📚</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Kurikulum Terintegrasi</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size)}px; opacity: 0.8">Perpaduan kurikulum nasional dengan pendidikan agama Islam yang mendalam</p>
+              </div>
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">🏫</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Lingkungan Nyaman</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size)}px; opacity: 0.8">Fasilitas modern dengan ruang kelas ber-AC dan lingkungan yang kondusif</p>
+              </div>
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">🤲</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Pembiasaan Ibadah</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size)}px; opacity: 0.8">Shalat berjamaah, tahfidz Al-Quran, dan akhlak mulia dalam keseharian</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        
+        <section class="section-spacing" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color}15 0%, ${config.secondary_color || defaultConfig.secondary_color}15 100%)">
+          <div class="max-w-7xl mx-auto">
+            <h2 class="text-center font-bold mb-12" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2}px; color: ${config.text_color || defaultConfig.text_color}">Jadwal PPDB 2026</h2>
+            <div class="overflow-x-auto">
+              <table class="w-full shadow-xl rounded-xl overflow-hidden" style="background: ${config.surface_color || defaultConfig.surface_color}">
+                <thead style="background: ${config.primary_color || defaultConfig.primary_color}">
+                  <tr class="text-white">
+                    <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Gelombang</th>
+                    <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Periode Pendaftaran</th>
+                    <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Tes Seleksi</th>
+                    <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Pengumuman</th>
+                  </tr>
+                </thead>
+                <tbody style="color: ${config.text_color || defaultConfig.text_color}">
+                  <tr class="border-b">
+                    <td class="p-4 font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Gelombang I</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">1 Jan - 28 Feb 2026</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">5 Maret 2026</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">10 Maret 2026</td>
+                  </tr>
+                  <tr>
+                    <td class="p-4 font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Gelombang II</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">1 Maret - 30 April 2026</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">5 Mei 2026</td>
+                    <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">10 Mei 2026</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderProfil(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-7xl mx-auto">
+            <h1 class="font-bold mb-8" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Profil Sekolah</h1>
+            
+            <div class="card p-8 rounded-xl shadow-lg mb-8" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <h2 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Visi</h2>
+              <p class="mb-6" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">"Menjadi Lembaga Pendidikan Islam Terdepan yang Mencetak Generasi Qur'ani, Berkarakter Mulia, dan Berprestasi"</p>
+              
+              <h2 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Misi</h2>
+              <ul class="space-y-3" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">
+                <li>✅ Menyelenggarakan pendidikan berbasis Al-Quran dan As-Sunnah</li>
+                <li>✅ Membentuk karakter Islami melalui pembiasaan ibadah harian</li>
+                <li>✅ Mengintegrasikan kurikulum nasional dengan pendidikan agama</li>
+                <li>✅ Mengembangkan potensi akademik dan non-akademik siswa</li>
+                <li>✅ Menciptakan lingkungan belajar yang kondusif dan Islami</li>
+              </ul>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+              <div class="card p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <h3 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">📜 Sejarah</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">SDIT Ibnu Hajar didirikan pada tahun 2010 dengan komitmen mencetak generasi Qur'ani yang berakhlak mulia dan berprestasi dalam bidang akademik maupun non-akademik.</p>
+              </div>
+              
+              <div class="card p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <h3 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">👥 Tenaga Pengajar</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Tim pengajar kami terdiri dari lulusan terbaik dari universitas ternama dengan pengalaman mengajar dan hafalan Al-Quran yang mumpuni.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderAlur(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-4xl mx-auto">
+            <h1 class="font-bold mb-8" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Alur & Syarat Pendaftaran</h1>
+            
+            <div class="card p-8 rounded-xl shadow-lg mb-8" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <h2 class="font-bold mb-6" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Alur Pendaftaran</h2>
+              <div class="space-y-6">
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background: ${config.primary_color || defaultConfig.primary_color}; font-size: ${(config.font_size || defaultConfig.font_size)}px">1</div>
+                  <div>
+                    <h3 class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Pendaftaran Online</h3>
+                    <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Isi formulir pendaftaran melalui website PPDB</p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background: ${config.primary_color || defaultConfig.primary_color}; font-size: ${(config.font_size || defaultConfig.font_size)}px">2</div>
+                  <div>
+                    <h3 class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Verifikasi Dokumen</h3>
+                    <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Tim panitia akan memverifikasi kelengkapan dokumen</p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background: ${config.primary_color || defaultConfig.primary_color}; font-size: ${(config.font_size || defaultConfig.font_size)}px">3</div>
+                  <div>
+                    <h3 class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Tes Seleksi</h3>
+                    <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Mengikuti tes akademik dan wawancara</p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background: ${config.primary_color || defaultConfig.primary_color}; font-size: ${(config.font_size || defaultConfig.font_size)}px">4</div>
+                  <div>
+                    <h3 class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Pengumuman</h3>
+                    <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Cek hasil seleksi melalui halaman Pengumuman</p>
+                  </div>
+                </div>
+                
+                <div class="flex gap-4">
+                  <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style="background: ${config.primary_color || defaultConfig.primary_color}; font-size: ${(config.font_size || defaultConfig.font_size)}px">5</div>
+                  <div>
+                    <h3 class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">Daftar Ulang</h3>
+                    <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Melakukan registrasi ulang dan pembayaran</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card p-8 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <h2 class="font-bold mb-6" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Syarat Pendaftaran</h2>
+              <ul class="space-y-3" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">
+                <li>     Fotokopi Akte Kelahiran</li>
+                <li>📄 Fotokopi Kartu Keluarga (KK)</li>
+                <li>📷 Pas foto berwarna 3x4 (2 lembar)</li>
+                <li>📋 Fotokopi rapor semester terakhir (untuk pindahan)</li>
+                <li>💉 Fotokopi kartu imunisasi</li>
+                <li>💳 Fotokopi KTP Orang Tua</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderBiaya(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-5xl mx-auto">
+            <h1 class="font-bold mb-8" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Biaya Pendidikan</h1>
+            
+            <div class="grid md:grid-cols-3 gap-6">
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-4xl">📝</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Biaya Pendaftaran</h3>
+                <p class="font-bold mb-2 text-accent" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px; color: ${config.accent_color || defaultConfig.accent_color}">Rp 300.000</p>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; opacity: 0.7">Biaya formulir & administrasi</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-4xl">💰</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Uang Pangkal</h3>
+                <p class="font-bold mb-2 text-accent" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px; color: ${config.accent_color || defaultConfig.accent_color}">Rp 8.000.000</p>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; opacity: 0.7">Dibayarkan 1x saat masuk</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-4xl">📅</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">SPP Bulanan</h3>
+                <p class="font-bold mb-2 text-accent" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px; color: ${config.accent_color || defaultConfig.accent_color}">Rp 850.000</p>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; opacity: 0.7">Sudah termasuk makan siang</p>
+              </div>
+            </div>
+            
+            <div class="card p-8 rounded-xl shadow-lg mt-8" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color}15 0%, ${config.secondary_color || defaultConfig.secondary_color}15 100%); color: ${config.text_color || defaultConfig.text_color}">
+              <h3 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">ℹ️ Informasi Tambahan</h3>
+              <ul class="space-y-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">
+                <li>✅ Biaya sudah termasuk seragam, buku pelajaran, dan kegiatan ekstrakurikuler</li>
+                <li>✅ Tersedia program beasiswa prestasi untuk siswa berprestasi</li>
+                <li>✅ Pembayaran dapat diangsur (hubungi admin untuk info lebih lanjut)</li>
+                <li>✅ Biaya dapat berubah sewaktu-waktu</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderFasilitas(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-7xl mx-auto">
+            <h1 class="font-bold mb-8" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Fasilitas Sekolah</h1>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">🏫</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Ruang Kelas AC</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Kelas nyaman ber-AC dengan kapasitas ideal untuk pembelajaran efektif</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">💻</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Lab Komputer</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Laboratorium komputer lengkap dengan akses internet untuk pembelajaran digital</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">🕌</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Masjid</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Masjid luas untuk kegiatan ibadah berjamaah dan pembelajaran agama</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">⚽</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Lapangan Olahraga</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Lapangan multifungsi untuk berbagai aktivitas olahraga dan permainan</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">📚</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Perpustakaan</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Koleksi buku pelajaran dan bacaan Islami yang lengkap dan terawat</p>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-5xl">🍽️</div>
+                <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">Kantin Sehat</h3>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Kantin dengan menu makanan sehat, bergizi, dan terjamin kehalalannya</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderProgram(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-7xl mx-auto">
+            <h1 class="font-bold mb-8" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Program Unggulan</h1>
+            
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+              <div class="card p-8 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-6xl">📖</div>
+                <h2 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Tahfidz Al-Quran</h2>
+                <p class="mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Program menghafal Al-Quran dengan metode terbukti efektif, dibimbing oleh ustadz/ustadzah berpengalaman.</p>
+                <ul class="space-y-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">
+                  <li>✅ Target minimal 2 juz selama 6 tahun</li>
+                  <li>✅ Metode talaqqi dan murojaah harian</li>
+                  <li>✅ Evaluasi berkala oleh guru tahfidz</li>
+                </ul>
+              </div>
+              
+              <div class="card p-8 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="mb-4 text-6xl">🗣️</div>
+                <h2 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Bahasa Arab & Inggris</h2>
+                <p class="mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Pembelajaran bilingual dengan praktik percakapan sehari-hari di lingkungan sekolah.</p>
+                <ul class="space-y-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">
+                  <li>✅ Conversation club mingguan</li>
+                  <li>✅ Kosakata harian wajib</li>
+                  <li>✅ Native speaker session bulanan</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="card p-8 rounded-xl shadow-lg" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color}15 0%, ${config.secondary_color || defaultConfig.secondary_color}15 100%); color: ${config.text_color || defaultConfig.text_color}">
+              <h2 class="font-bold mb-6" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">🎯 Ekstrakurikuler</h2>
+              <div class="grid md:grid-cols-4 gap-4">
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">⚽</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Futsal</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">🏹</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Panahan</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">🎨</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Seni</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">💻</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Robotika</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">📚</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Tahsin</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">🥋</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Karate</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">🎤</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Tilawah</p>
+                </div>
+                <div class="text-center">
+                  <div class="mb-2 text-3xl">🔬</div>
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Sains Club</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderPendaftaran(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-3xl mx-auto">
+            <h1 class="font-bold mb-8 text-center" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Formulir Pendaftaran Siswa Baru</h1>
+            
+            <div class="card p-8 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <form id="pendaftaran-form">
+                <div class="mb-6">
+                  <label for="nama" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Nama Lengkap Calon Siswa *</label>
+                  <input type="text" id="nama" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label for="tempat-lahir" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Tempat Lahir *</label>
+                    <input type="text" id="tempat-lahir" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                  </div>
+                  <div>
+                    <label for="tanggal-lahir" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Tanggal Lahir *</label>
+                    <input type="date" id="tanggal-lahir" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                  </div>
+                </div>
+                
+                <div class="mb-6">
+                  <label for="jenis-kelamin" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Jenis Kelamin *</label>
+                  <select id="jenis-kelamin" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                    <option value="">Pilih jenis kelamin</option>
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                  </select>
+                </div>
+                
+                <div class="mb-6">
+                  <label for="alamat" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Alamat Lengkap *</label>
+                  <textarea id="alamat" required rows="3" class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40"></textarea>
+                </div>
+                
+                <div class="mb-6">
+                  <label for="nama-ayah" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Nama Ayah *</label>
+                  <input type="text" id="nama-ayah" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                </div>
+                
+                <div class="mb-6">
+                  <label for="nama-ibu" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Nama Ibu *</label>
+                  <input type="text" id="nama-ibu" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-4 mb-6">
+                  <div>
+                    <label for="no-telp" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">No. Telepon/WA *</label>
+                    <input type="tel" id="no-telp" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40" placeholder="081234567890">
+                  </div>
+                  <div>
+                    <label for="email" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Email</label>
+                    <input type="email" id="email" class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                  </div>
+                </div>
+                
+                <div class="mb-6">
+                  <label for="gelombang" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Gelombang Pendaftaran *</label>
+                  <select id="gelombang" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40">
+                    <option value="">Pilih gelombang</option>
+                    <option value="Gelombang I">Gelombang I (1 Jan - 28 Feb 2026)</option>
+                    <option value="Gelombang II">Gelombang II (1 Mar - 30 Apr 2026)</option>
+                  </select>
+                </div>
+                
+                <div id="loading-message" class="hidden mb-4 p-4 rounded-lg text-center" style="background: ${config.primary_color || defaultConfig.primary_color}20; color: ${config.text_color || defaultConfig.text_color}">
+                  <p style="font-size: ${(config.font_size || defaultConfig.font_size)}px">⏳ Menyimpan data pendaftaran...</p>
+                </div>
+                
+                <div id="success-message" class="hidden mb-4 p-4 rounded-lg" style="background: ${config.secondary_color || defaultConfig.secondary_color}20; color: ${config.text_color || defaultConfig.text_color}">
+                  <p class="font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px">✅ Pendaftaran Berhasil!</p>
+                  <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Data Anda telah tersimpan. Tim kami akan menghubungi Anda untuk informasi selanjutnya.</p>
+                </div>
+                
+                <div id="error-message" class="hidden mb-4 p-4 rounded-lg" style="background: #fee; color: #c00">
+                  <p class="font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">❌ Terjadi kesalahan. Silakan coba lagi.</p>
+                </div>
+                
+                <button type="submit" id="submit-btn" class="w-full py-4 rounded-lg font-bold text-white hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px; background: ${config.primary_color || defaultConfig.primary_color}">
+                  Kirim Pendaftaran 📤
+                </button>
+              </form>
+            </div>
+            
+            <div class="mt-8 p-6 rounded-xl text-center" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color}15 0%, ${config.secondary_color || defaultConfig.secondary_color}15 100%); color: ${config.text_color || defaultConfig.text_color}">
+              <p class="mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Ada pertanyaan? Hubungi kami:</p>
+              <a href="https://wa.me/62${(config.whatsapp_number || defaultConfig.whatsapp_number).replace(/^0/, '')}" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; background: ${config.accent_color || defaultConfig.accent_color}; color: ${config.text_color || defaultConfig.text_color}">
+                💬 Chat WhatsApp
+              </a>
+            </div>
+          </div>
+        </section>
+      `;
+      
+      const form = document.getElementById('pendaftaran-form');
+      form.addEventListener('submit', handleSubmit);
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      if (pendaftaranData.length >= 999) {
+        showError("Batas maksimal 999 pendaftaran telah tercapai. Silakan hubungi admin sekolah.");
+        return;
+      }
+      
+      if (isSubmitting) return;
+      isSubmitting = true;
+      
+      showLoading(true);
+      hideMessages();
+      
+      const formData = {
+        id: Date.now().toString(),
+        nama_lengkap: document.getElementById('nama').value,
+        tempat_lahir: document.getElementById('tempat-lahir').value,
+        tanggal_lahir: document.getElementById('tanggal-lahir').value,
+        jenis_kelamin: document.getElementById('jenis-kelamin').value,
+        alamat: document.getElementById('alamat').value,
+        nama_ayah: document.getElementById('nama-ayah').value,
+        nama_ibu: document.getElementById('nama-ibu').value,
+        no_telp: document.getElementById('no-telp').value,
+        email: document.getElementById('email').value || '',
+        gelombang: document.getElementById('gelombang').value,
+        tanggal_daftar: new Date().toISOString(),
+        status: "Menunggu Verifikasi"
+      };
+      
+      if (window.dataSdk) {
+        const result = await window.dataSdk.create(formData);
+        
+        if (result.isOk) {
+          showSuccess();
+          document.getElementById('pendaftaran-form').reset();
+        } else {
+          showError("Gagal menyimpan data. Silakan coba lagi.");
+        }
+      }
+      
+      showLoading(false);
+      isSubmitting = false;
+    }
+
+    function showLoading(show) {
+      const loading = document.getElementById('loading-message');
+      const submitBtn = document.getElementById('submit-btn');
+      if (show) {
+        loading.classList.remove('hidden');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+      } else {
+        loading.classList.add('hidden');
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+      }
+    }
+
+    function showSuccess() {
+      document.getElementById('success-message').classList.remove('hidden');
+      setTimeout(() => {
+        document.getElementById('success-message').classList.add('hidden');
+      }, 5000);
+    }
+
+    function showError(message) {
+      const errorEl = document.getElementById('error-message');
+      errorEl.querySelector('p').textContent = `❌ ${message}`;
+      errorEl.classList.remove('hidden');
+      setTimeout(() => {
+        errorEl.classList.add('hidden');
+      }, 5000);
+    }
+
+    function hideMessages() {
+      document.getElementById('success-message').classList.add('hidden');
+      document.getElementById('error-message').classList.add('hidden');
+    }
+
+    function renderPengumuman(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-6xl mx-auto">
+            <h1 class="font-bold mb-8 text-center" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Pengumuman PPDB</h1>
+            
+            <div id="pengumuman-content"></div>
+          </div>
+        </section>
+      `;
+      
+      renderPengumumanContent();
+    }
+
+    function renderPengumumanContent() {
+      const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+      const container = document.getElementById('pengumuman-content');
+      
+      if (!container) return;
+      
+      if (pendaftaranData.length === 0) {
+        container.innerHTML = `
+          <div class="card p-12 rounded-xl shadow-lg text-center" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+            <div class="mb-4 text-6xl">📋</div>
+            <h2 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Belum Ada Data Pendaftaran</h2>
+            <p class="mb-6" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Silakan daftar terlebih dahulu melalui menu Pendaftaran.</p>
+            <button onclick="navigateTo('pendaftaran')" class="px-6 py-3 rounded-lg font-semibold text-white hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; background: ${config.primary_color || defaultConfig.primary_color}">
+              Daftar Sekarang
+            </button>
+          </div>
+        `;
+        return;
+      }
+      
+      const tableHTML = `
+        <div class="card p-6 rounded-xl shadow-lg overflow-x-auto" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <table class="w-full">
+            <thead style="background: ${config.primary_color || defaultConfig.primary_color}">
+              <tr class="text-white">
+                <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">No</th>
+                <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Nama Lengkap</th>
+                <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Gelombang</th>
+                <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Tanggal Daftar</th>
+                <th class="p-4 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Status</th>
+              </tr>
+            </thead>
+            <tbody style="color: ${config.text_color || defaultConfig.text_color}">
+              ${pendaftaranData.map((item, index) => `
+                <tr class="border-b">
+                  <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${index + 1}</td>
+                  <td class="p-4 font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.nama_lengkap}</td>
+                  <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.gelombang}</td>
+                  <td class="p-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${new Date(item.tanggal_daftar).toLocaleDateString('id-ID')}</td>
+                  <td class="p-4">
+                    <span class="px-3 py-1 rounded-full font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; background: ${config.accent_color || defaultConfig.accent_color}40; color: ${config.text_color || defaultConfig.text_color}">
+                      ${item.status}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-6 p-6 rounded-xl" style="background: linear-gradient(135deg, ${config.primary_color || defaultConfig.primary_color}15 0%, ${config.secondary_color || defaultConfig.secondary_color}15 100%); color: ${config.text_color || defaultConfig.text_color}">
+          <h3 class="font-bold mb-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.25}px">ℹ️ Informasi Penting</h3>
+          <ul class="space-y-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">
+            <li>✅ Data akan diverifikasi oleh tim panitia dalam 1-3 hari kerja</li>
+            <li>✅ Informasi jadwal tes akan dikirim melalui WhatsApp/Email</li>
+            <li>✅ Pastikan nomor telepon dan email yang didaftarkan aktif</li>
+            <li>✅ Untuk pertanyaan lebih lanjut, hubungi admin melalui WhatsApp</li>
+          </ul>
+        </div>
+      `;
+      
+      container.innerHTML = tableHTML;
+    }
+
+    function renderAdmin(content, config) {
+      if (!isAdminLoggedIn) {
+        renderAdminLogin(content, config);
+      } else {
+        renderAdminDashboard(content, config);
+      }
+    }
+
+    function renderAdminLogin(content, config) {
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-md mx-auto">
+            <div class="card p-8 rounded-xl shadow-lg" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <div class="text-center mb-6">
+                <div class="mb-4 text-6xl">🔐</div>
+                <h1 class="font-bold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2}px">Portal Admin PPDB</h1>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; opacity: 0.7">Silakan login untuk mengakses dashboard admin</p>
+              </div>
+              
+              <form id="admin-login-form">
+                <div class="mb-4">
+                  <label for="admin-username" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Username</label>
+                  <input type="text" id="admin-username" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40" placeholder="Masukkan username">
+                </div>
+                
+                <div class="mb-6">
+                  <label for="admin-password" class="block font-semibold mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size)}px">Password</label>
+                  <input type="password" id="admin-password" required class="w-full px-4 py-3 rounded-lg border-2 focus:outline-none" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; border-color: ${config.primary_color || defaultConfig.primary_color}40" placeholder="Masukkan password">
+                </div>
+                
+                <div id="login-error" class="hidden mb-4 p-3 rounded-lg text-center" style="background: #fee; color: #c00; font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">
+                  ❌ Username atau password salah
+                </div>
+                
+                <button type="submit" class="w-full py-3 rounded-lg font-bold text-white hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px; background: ${config.primary_color || defaultConfig.primary_color}">
+                  Masuk 🔓
+                </button>
+              </form>
+              
+              <div class="mt-6 p-4 rounded-lg text-center" style="background: ${config.primary_color || defaultConfig.primary_color}15; font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; color: ${config.text_color || defaultConfig.text_color}">
+                <p>⚠️ Halaman ini khusus untuk panitia PPDB</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      `;
+      
+      const loginForm = document.getElementById('admin-login-form');
+      loginForm.addEventListener('submit', handleAdminLogin);
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('admin-username').value;
+      const password = document.getElementById('admin-password').value;
+      const errorEl = document.getElementById('login-error');
+      
+      if (username === 'JEPRI' && password === 'JEPRI22') {
+        isAdminLoggedIn = true;
+        errorEl.classList.add('hidden');
+        renderContent();
+      } else {
+        errorEl.classList.remove('hidden');
+      }
+    }
+
+    function renderAdminDashboard(content, config) {
+      const totalPendaftar = pendaftaranData.length;
+      const gelombang1 = pendaftaranData.filter(d => d.gelombang === 'Gelombang I').length;
+      const gelombang2 = pendaftaranData.filter(d => d.gelombang === 'Gelombang II').length;
+      
+      content.innerHTML = `
+        <section class="section-spacing" style="background: ${config.surface_color || defaultConfig.surface_color}">
+          <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+              <div>
+                <h1 class="font-bold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.25}px; color: ${config.text_color || defaultConfig.text_color}">Dashboard Admin PPDB</h1>
+                <p style="font-size: ${(config.font_size || defaultConfig.font_size)}px; color: ${config.text_color || defaultConfig.text_color}; opacity: 0.7">Selamat datang, Admin JEPRI</p>
+              </div>
+              <button onclick="handleLogout()" class="px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition" style="font-size: ${(config.font_size || defaultConfig.font_size)}px; background: #dc2626; color: white">
+                🚪 Logout
+              </button>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.primary_color || defaultConfig.primary_color}; color: white">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; opacity: 0.9">Total Pendaftar</p>
+                    <p class="font-bold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.5}px">${totalPendaftar}</p>
+                  </div>
+                  <div style="font-size: ${(config.font_size || defaultConfig.font_size) * 3}px">👥</div>
+                </div>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.secondary_color || defaultConfig.secondary_color}; color: white">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; opacity: 0.9">Gelombang I</p>
+                    <p class="font-bold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.5}px">${gelombang1}</p>
+                  </div>
+                  <div style="font-size: ${(config.font_size || defaultConfig.font_size) * 3}px">📊</div>
+                </div>
+              </div>
+              
+              <div class="card card-hover p-6 rounded-xl shadow-lg" style="background: ${config.accent_color || defaultConfig.accent_color}; color: ${config.text_color || defaultConfig.text_color}">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="mb-2" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px; opacity: 0.9">Gelombang II</p>
+                    <p class="font-bold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 2.5}px">${gelombang2}</p>
+                  </div>
+                  <div style="font-size: ${(config.font_size || defaultConfig.font_size) * 3}px">📈</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card p-6 rounded-xl shadow-lg mb-6" style="background: ${config.surface_color || defaultConfig.surface_color}; color: ${config.text_color || defaultConfig.text_color}">
+              <h2 class="font-bold mb-4" style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.5}px">Data Pendaftar</h2>
+              <div id="admin-table-content"></div>
+            </div>
+          </div>
+        </section>
+      `;
+      
+      renderAdminTable();
+    }
+
+    function renderAdminTable() {
+      const config = window.elementSdk ? window.elementSdk.config : defaultConfig;
+      const container = document.getElementById('admin-table-content');
+      
+      if (!container) return;
+      
+      if (pendaftaranData.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12">
+            <div class="mb-4 text-6xl">📋</div>
+            <p style="font-size: ${(config.font_size || defaultConfig.font_size) * 1.125}px; color: ${config.text_color || defaultConfig.text_color}">Belum ada data pendaftar</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const tableHTML = `
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead style="background: ${config.primary_color || defaultConfig.primary_color}">
+              <tr class="text-white">
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">No</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Nama Lengkap</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">TTL</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">JK</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Nama Ayah</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Nama Ibu</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">No. Telp</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Gelombang</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Status</th>
+                <th class="p-3 text-left" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">Aksi</th>
+              </tr>
+            </thead>
+            <tbody style="color: ${config.text_color || defaultConfig.text_color}">
+              ${pendaftaranData.map((item, index) => {
+                const itemId = item.__backendId || item.id;
+                return `
+                  <tr class="border-b hover:bg-opacity-50" style="transition: background 0.2s" data-item-id="${itemId}">
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${index + 1}</td>
+                    <td class="p-3 font-semibold" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.nama_lengkap}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px">${item.tempat_lahir}, ${new Date(item.tanggal_lahir).toLocaleDateString('id-ID')}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.jenis_kelamin === 'Laki-laki' ? 'L' : 'P'}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.nama_ayah}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.875}px">${item.nama_ibu}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px">${item.no_telp}</td>
+                    <td class="p-3" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px">${item.gelombang}</td>
+                    <td class="p-3">
+                      <select onchange="updateStatus('${itemId}', this.value)" class="px-2 py-1 rounded border" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; border-color: ${config.primary_color || defaultConfig.primary_color}">
+                        <option value="Menunggu Verifikasi" ${item.status === 'Menunggu Verifikasi' ? 'selected' : ''}>Menunggu</option>
+                        <option value="Terverifikasi" ${item.status === 'Terverifikasi' ? 'selected' : ''}>Terverifikasi</option>
+                        <option value="Lulus" ${item.status === 'Lulus' ? 'selected' : ''}>Lulus</option>
+                        <option value="Tidak Lulus" ${item.status === 'Tidak Lulus' ? 'selected' : ''}>Tidak Lulus</option>
+                      </select>
+                    </td>
+                    <td class="p-3">
+                      <button onclick="deleteData('${itemId}')" class="px-3 py-1 rounded text-white hover:opacity-80 transition" style="font-size: ${(config.font_size || defaultConfig.font_size) * 0.75}px; background: #dc2626">
+                        🗑️ Hapus
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      container.innerHTML = tableHTML;
+    }
+
+    async function updateStatus(itemId, newStatus) {
+      const item = pendaftaranData.find(d => (d.__backendId || d.id) === itemId);
+      if (!item || !window.dataSdk) return;
+      
+      item.status = newStatus;
+      const result = await window.dataSdk.update(item);
+      
+      if (!result.isOk) {
+        const tempDiv = document.createElement('div');
+        tempDiv.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50';
+        tempDiv.style.background = '#fee';
+        tempDiv.style.color = '#c00';
+        tempDiv.textContent = '❌ Gagal update status';
+        document.body.appendChild(tempDiv);
+        setTimeout(() => tempDiv.remove(), 3000);
+      }
+    }
+
+    async function deleteData(itemId) {
+      const item = pendaftaranData.find(d => (d.__backendId || d.id) === itemId);
+      if (!item || !window.dataSdk) return;
+      
+      const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+      if (!row) return;
+      
+      const confirmBtn = document.createElement('button');
+      confirmBtn.textContent = '✓ Konfirmasi Hapus';
+      confirmBtn.className = 'px-3 py-1 rounded text-white mr-2';
+      confirmBtn.style.background = '#dc2626';
+      confirmBtn.style.fontSize = '12px';
+      
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = '✕ Batal';
+      cancelBtn.className = 'px-3 py-1 rounded';
+      cancelBtn.style.background = '#6b7280';
+      cancelBtn.style.color = 'white';
+      cancelBtn.style.fontSize = '12px';
+      
+      const actionCell = row.querySelector('td:last-child');
+      const originalContent = actionCell.innerHTML;
+      
+      actionCell.innerHTML = '';
+      actionCell.appendChild(confirmBtn);
+      actionCell.appendChild(cancelBtn);
+      
+      confirmBtn.onclick = async () => {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '⏳ Menghapus...';
+        
+        const result = await window.dataSdk.delete(item);
+        
+        if (!result.isOk) {
+          actionCell.innerHTML = originalContent;
+          const tempDiv = document.createElement('div');
+          tempDiv.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50';
+          tempDiv.style.background = '#fee';
+          tempDiv.style.color = '#c00';
+          tempDiv.textContent = '❌ Gagal menghapus data';
+          document.body.appendChild(tempDiv);
+          setTimeout(() => tempDiv.remove(), 3000);
+        }
+      };
+      
+      cancelBtn.onclick = () => {
+        actionCell.innerHTML = originalContent;
+      };
+    }
+
+    function handleLogout() {
+      isAdminLoggedIn = false;
+      navigateTo('beranda');
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c52357a10a6b599',t:'MTc2OTYyMTMzNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
